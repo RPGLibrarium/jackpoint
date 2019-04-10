@@ -11,3 +11,12 @@ services:
       - 127.0.0.1:9001:9000
     command: "-verbose -hooks=/etc/webhook/hooks.json"
     restart: always
+
+  liberation-db:
+        image: mariadb
+        environment:
+            - MYSQL_ROOT_PASSWORD=Password
+            - MYSQL_DATABASE=liberation
+        ports:
+            - 33061:3306
+

@@ -1,0 +1,20 @@
+version "3.6"
+
+services:
+    keycloak-db:
+        image: mariadb:10.2
+        environment:
+            - MYSQL_ROOT_PASSWORD=thereIsNoPassword!
+            - MYSQL_DATABASE=keycloak
+
+     keycloak:
+        image: jboss/keycloak
+        environment:
+            - KEYCLOAK_USER=admin
+            - KEYCLOAK_PASSWORD=admin
+            - DB_VENDOR=mariadb
+            - DB_ADDR=keycloak-db
+            - DB_PASSWORD=thereIsNoPassword!
+            - DB_USER=root
+        ports:
+            - 8081:8080
