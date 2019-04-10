@@ -12,10 +12,11 @@ date="$(date -Iseconds)"
 releasedir="liberation.release.$date"
 staticdir="liberation.static.$date"
 
-cargo build --release --target-dir  /target/"$releasedir"
+cargo build --release 
 
-# copy static files
-cp -R /web/app /target/"$staticdir"
+# copy files
+cp -R target/release/ /target/"$releasedir"
+cp -R web/app /target/"$staticdir"
 
 # change symlink
 cd /target
