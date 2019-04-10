@@ -6,16 +6,18 @@ services:
         environment:
             - MYSQL_ROOT_PASSWORD=
             - MYSQL_DATABASE=keycloak
+        restart: always
 
     keycloak:
-      image: jboss/keycloak
-      environment:
-          - KEYCLOAK_USER=admin
-          - KEYCLOAK_PASSWORD=
-          - DB_VENDOR=mariadb
-          - DB_ADDR=keycloak-db
-          - DB_PASSWORD=
-          - DB_USER=root
-          - PROXY_ADDRESS_FORWARDING=true
-      ports:
-          - 8081:8080
+        image: jboss/keycloak
+        environment:
+            - KEYCLOAK_USER=admin
+            - KEYCLOAK_PASSWORD=
+            - DB_VENDOR=mariadb
+            - DB_ADDR=keycloak-db
+            - DB_PASSWORD=
+            - DB_USER=root
+            - PROXY_ADDRESS_FORWARDING=true
+        ports:
+            - 8081:8080
+        restart: always
