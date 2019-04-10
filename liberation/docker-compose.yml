@@ -13,10 +13,11 @@ services:
     restart: always
 
   liberation-db:
-        image: mariadb
-        environment:
-            - MYSQL_ROOT_PASSWORD=Password
-            - MYSQL_DATABASE=liberation
-        ports:
-            - 33061:3306
+    image: mariadb
+    environment:
+      - MYSQL_ROOT_PASSWORD=
+      - MYSQL_DATABASE=liberation
+    ports:
+      - 33061:3306
+    restart: always
 
