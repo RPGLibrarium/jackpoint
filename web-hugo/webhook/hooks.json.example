@@ -1,7 +1,7 @@
 [
   {
-    "id": "build-site",
-    "execute-command": "/etc/webhook/buildhugo.sh",
+    "id": "build",
+    "execute-command": "/etc/webhook/build.sh",
     "command-working-directory": "/tmp/build",
     "response-message": "I got the payload!",
     "response-headers": [
