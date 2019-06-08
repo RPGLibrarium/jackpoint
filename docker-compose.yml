@@ -11,8 +11,6 @@ services:
       - MYSQL_RANDOM_ROOT_PASSWORD="yes"
     volumes:
       - data-keycloak:/var/lib/mysql
-    ports:
-      -
 
   keycloak:
     image: jboss/keycloak
