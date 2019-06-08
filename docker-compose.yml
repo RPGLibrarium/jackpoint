@@ -37,7 +37,7 @@ services:
       - 127.0.0.1:9000:9000
     command: "-verbose -hooks=/etc/webhook/hooks.json"
 
-  mailmab-db:
+  mailman-db:
     image: mariadb
     restart: always
     environment:
@@ -58,7 +58,7 @@ services:
       - ./mailman/core:/opt/mailman/
     stop_grace_period: 30s
     depends_on:
-      - database
+      - mailman-db
     environment:
       - DATABASE_URL=mysql+pymysql:${MAILMAN_DB_PW}//mailman:@database/mailman
       - DATABASE_TYPE=mysql
@@ -73,10 +73,7 @@ services:
     image: maxking/mailman-web:latest
     restart: always
     depends_on:
-      - database
-    links:
-      - mailman-core:mailman-core
-      - database:database
+      - mailman-db
     volumes:
       - ./mailman/web:/opt/mailman-web-data
     environment:
@@ -127,12 +124,10 @@ services:
     image: mariadb
     restart: always
     environment:
-      # TODO: set liberation db password
-      - MYSQL_ROOT_PASSWORD=
+      - MYSQL_ROOT_PASSWORD=${LIBERATION_DB_PW}
       - MYSQL_DATABASE=liberation
     ports:
       - 33061:3306
-
 
 networks:
   mailman:
