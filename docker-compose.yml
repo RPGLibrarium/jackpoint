@@ -11,6 +11,8 @@ services:
       - MYSQL_RANDOM_ROOT_PASSWORD="yes"
     volumes:
       - data-keycloak:/var/lib/mysql
+    ports:
+      -
 
   keycloak:
     image: jboss/keycloak
@@ -37,7 +39,7 @@ services:
       - 127.0.0.1:9000:9000
     command: "-verbose -hooks=/etc/webhook/hooks.json"
 
-  mailman-db:
+  mailmab-db:
     image: mariadb
     restart: always
     environment:
@@ -58,12 +60,12 @@ services:
       - ./mailman/core:/opt/mailman/
     stop_grace_period: 30s
     depends_on:
-      - mailman-db
+      - database
     environment:
       - DATABASE_URL=mysql+pymysql:${MAILMAN_DB_PW}//mailman:@database/mailman
       - DATABASE_TYPE=mysql
       - DATABASE_CLASS=mailman.database.mysql.MySQLDatabase
-      - HYPERKITTY_API_KEY=${HYPERKIT}
+      - HYPERKITTY_API_KEY=${HYPERKITTY_API_KEY}
       - SMTP_HOST=mta
       - SMTP_PORT=25
     networks:
@@ -73,7 +75,10 @@ services:
     image: maxking/mailman-web:latest
     restart: always
     depends_on:
-      - mailman-db
+      - database
+    links:
+      - mailman-core:mailman-core
+      - database:database
     volumes:
       - ./mailman/web:/opt/mailman-web-data
     environment:
@@ -124,10 +129,12 @@ services:
     image: mariadb
     restart: always
     environment:
-      - MYSQL_ROOT_PASSWORD=${LIBERATION_DB_PW}
+      # TODO: set liberation db password
+      - MYSQL_ROOT_PASSWORD=
       - MYSQL_DATABASE=liberation
     ports:
       - 33061:3306
+
 
 networks:
   mailman:
