@@ -37,7 +37,7 @@ services:
       - 127.0.0.1:9000:9000
     command: "-verbose -hooks=/etc/webhook/hooks.json"
 
-  mailmab-db:
+  mailman-db:
     image: mariadb
     restart: always
     environment:
