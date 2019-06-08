@@ -60,7 +60,7 @@ services:
     depends_on:
       - mailman-db
     environment:
-      - DATABASE_URL=mysql+pymysql:${MAILMAN_DB_PW}//mailman:@database/mailman
+      - DATABASE_URL=mysql+pymysql://mailman:${MAILMAN_DB_PW}@mailman-db/mailman
       - DATABASE_TYPE=mysql
       - DATABASE_CLASS=mailman.database.mysql.MySQLDatabase
       - HYPERKITTY_API_KEY=${HYPERKITTY_API_KEY}
@@ -77,7 +77,7 @@ services:
     volumes:
       - ./mailman/web:/opt/mailman-web-data
     environment:
-      - DATABASE_URL=mysql://mailman:${MAILMAN_DB_PW}@database/mailman
+      - DATABASE_URL=mysql://mailman:${MAILMAN_DB_PW}@mailman-db/mailman
       - DATABASE_TYPE=mysql
       - DATABASE_CLASS=mailman.database.mysql.MySQLDatabase
       - HYPERKITTY_API_KEY=${HYPERKITTY_API_KEY}
