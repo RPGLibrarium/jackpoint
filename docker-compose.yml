@@ -124,9 +124,10 @@ services:
     image: mariadb
     restart: always
     environment:
-      # TODO: set liberation db password
-      - MYSQL_ROOT_PASSWORD=
       - MYSQL_DATABASE=liberation
+      - MYSQL_USER=liberation
+      - MYSQL_PASSWORD=${LIBERATION_DB_PW}
+      - MYSQL_RANDOM_ROOT_PASSWORD="yes"
     ports:
       - 33061:3306
 
