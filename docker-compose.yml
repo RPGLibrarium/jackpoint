@@ -1,0 +1,152 @@
+version: '3.7'
+
+services:
+  keycloak-db:
+    image: mariadb:10.2
+    restart: always
+    environment:
+      - MYSQL_DATABASE=keycloak
+      - MYSQL_USER=keycloak
+      - MYSQL_PASSWORD=${KEYCLOAK_DB_PW}
+      - MYSQL_RANDOM_ROOT_PASSWORD="yes"
+    volumes:
+      - data-keycloak:/var/lib/mysql
+
+  keycloak:
+    image: jboss/keycloak
+    restart: always
+    environment:
+      - KEYCLOAK_USER=admin
+      - KEYCLOAK_PASSWORD=${KEYCLOAK_PW}
+      - DB_VENDOR=mariadb
+      - DB_ADDR=keycloak-db
+      - DB_PASSWORD=${KEYCLOAK_DB_PW}
+      - DB_USER=keycloak
+      - PROXY_ADDRESS_FORWARDING=true
+    ports:
+      - 127.0.0.1:8081:8080
+
+  webhooks:
+    build: "./dockerfiles/webhooks/"
+    restart: always
+    volumes:
+      - ./webhook:/etc/webhook
+      - ./build:/target/
+    tmpfs: /tmp/build
+    ports:
+      - 127.0.0.1:9000:9000
+    command: "-verbose -hooks=/etc/webhook/hooks.json"
+
+  mailmab-db:
+    image: mariadb
+    restart: always
+    environment:
+      - MYSQL_DATABASE=mailman
+      - MYSQL_USER=mailman
+      - MYSQL_PASSWORD=${MAILMAN_DB_PW}
+      - MYSQL_RANDOM_ROOT_PASSWORD="yes"
+    volumes:
+      - data-mailman:/var/lib/mysql
+    networks:
+      - mailman
+      #- mailman_net_internal
+
+  mailman-core:
+    image: maxking/mailman-core:latest
+    restart: always
+    volumes:
+      - ./mailman/core:/opt/mailman/
+    stop_grace_period: 30s
+    depends_on:
+      - database
+    environment:
+      - DATABASE_URL=mysql+pymysql:${MAILMAN_DB_PW}//mailman:@database/mailman
+      - DATABASE_TYPE=mysql
+      - DATABASE_CLASS=mailman.database.mysql.MySQLDatabase
+      - HYPERKITTY_API_KEY=${HYPERKIT}
+      - SMTP_HOST=mta
+      - SMTP_PORT=25
+    networks:
+      - mailman
+
+  mailman-web:
+    image: maxking/mailman-web:latest
+    restart: always
+    depends_on:
+      - database
+    links:
+      - mailman-core:mailman-core
+      - database:database
+    volumes:
+      - ./mailman/web:/opt/mailman-web-data
+    environment:
+      - DATABASE_URL=mysql://mailman:${MAILMAN_DB_PW}@database/mailman
+      - DATABASE_TYPE=mysql
+      - DATABASE_CLASS=mailman.database.mysql.MySQLDatabase
+      - HYPERKITTY_API_KEY=${HYPERKITTY_API_KEY}
+      - SECRET_KEY=${DJANGO_KEY}
+      - SERVE_FROM_DOMAIN=lists.rpg-librarium.de
+      - MAILMAN_ADMIN_USER=admin
+      - MAILMAN_ADMIN_EMAIL=listlord@rpg-librarium.de
+      - EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+      - EMAIL_HOST=mta
+      - EMAIL_PORT=25
+    ports:
+      - 127.0.0.1:8091:8000
+    networks:
+      - mailman
+      #- mailman_net_internal
+
+  mta:
+    image: primesign/exim4
+    restart: always
+    volumes:
+      # Sets aliases for exim
+      - ./mta/aliases:/etc/aliases:ro
+      # Not sure if exim.conf in git is a good idea
+      - ./mta/exim.conf:/etc/exim/exim.conf:ro
+      # DKIM keys certainly are not
+      - ./mta/dkim:/etc/exim/dkim:ro
+      - ./mta/mailname:/etc/mailname:ro
+      # TLS certificates neither
+      - ./mta/tls:/etc/exim/tls:ro
+      - spool:/var/spool/exim
+      # Share sockets with mailman
+      - ./mailman/core/var:/opt/mailman/core/var
+    networks:
+      mailman:
+        # This was an attempt to make it work with ipv6. We failed.
+        #ipv4_address: 172.16.238.222
+        #ipv6_address: 2a03:4000:38:48:ffff::10
+    ports:
+      - 0.0.0.0:25:25
+      #- :::25:25
+      #- *:25:25
+
+  liberation-db:
+    image: mariadb
+    restart: always
+    environment:
+      # TODO: set liberation db password
+      - MYSQL_ROOT_PASSWORD=
+      - MYSQL_DATABASE=liberation
+    ports:
+      - 33061:3306
+
+
+networks:
+  mailman:
+# This was an attempt to make it work with ipv6. We failed.
+#    ipam:
+#      driver: default
+#      config:
+#        - subnet: "172.16.238.0/24"
+#        - subnet: "2a03:4000:38:48:ffff::/80"
+
+volumes:
+  data-keycloak:
+    driver: local
+  data-mailman:
+    driver: local
+  spool:
+    driver: local
