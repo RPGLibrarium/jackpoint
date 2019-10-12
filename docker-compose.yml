@@ -49,7 +49,6 @@ services:
       - data-mailman:/var/lib/mysql
     networks:
       - mailman
-      #- mailman_net_internal
 
   mailman-core:
     image: maxking/mailman-core:latest
@@ -131,6 +130,74 @@ services:
     ports:
       - 33061:3306
 
+# Still experimental
+  liberation:
+    build: ./liberation
+    restart: unless-stopped
+    depends_on:
+      - liberation-db
+    ports:
+      - 127.0.0.1:8042:8080
+    volumes:
+      - ./liberation/config/local.toml:/app/config/local.toml:ro
+    environment:
+      - LIBERATION_DATABASE_HOSTNAME=liberation-db
+      - LIBERATION_DATABASE_USERNAME=liberation
+      - LIBERATION_DATABASE_PASSWORD=${LIBERATION_DB_PW}
+      - LIBERATION_DATABASE_DATABASE=liberation
+#      - RUST_LOG=liberation=info,actix_web=info
+      - RUST_LOG=liberation=info
+#    entrypoint: /bin/bash
+#    command: "while 1; do sleep 1000; done"
+
+  gitea-db:
+    image: mariadb
+    restart: always
+    environment:
+      - MYSQL_DATABASE=gitea
+      - MYSQL_USER=gitea
+      - MYSQL_PASSWORD=${GITEA_DB_PW}
+      - MYSQL_RANDOM_ROOT_PASSWORD="yes"
+    networks:
+      - gitea
+    volumes:
+      - data-gitea:/var/lib/mysql
+
+  gitea:
+    image: gitea/gitea:latest
+    depends_on:
+      - gitea-db
+    environment:
+      # Parameters here are only used during setup and stored in the config afterwards. Changing them after the container has been initialized won't do anything.
+      - APP_NAME=RPG Librarium Aachen e.V.
+      - RUN_MODE=prod
+      - USER_UID=973
+      - USER_GIT=973
+      - DB_TYPE=mysql
+      - DB_HOST=gitea-db:3306
+      - DB_NAME=gitea
+      - DB_USER=gitea
+      - DB_PASSWD=${GITEA_DB_PW}
+      - SSH_DOMAIN=gitea.rpg-librarium.de
+      - SSH_LISTEN_PORT=222
+      - SSH_PORT=22
+      - HTTP_PORT=3000
+      - ROOT_URL=https://gitea.rpg-librarium.de
+      - DISABLE_REGISTRATION=false
+      # The following are not part of the docker config, but must be changed after setup in the app.ini
+      #- DOMAIN=gitea.rpg-librarium.de
+      #- ALLOW_ONLY_EXTERNAL_REGISTRATION=true
+      #- DEFAULT_ALLOW_CREATE_ORGANIZATION=false
+      #- ENABLE_OPENID_SIGNIN=false
+      #- ENABLE_OPENID_SIGNUP=false
+    restart: always
+    networks:
+      - gitea
+    volumes:
+      - ./gitea:/data
+    ports:
+      - "127.0.0.1:8031:3000"
+      - "222:22"
 
 networks:
   mailman:
@@ -140,11 +207,15 @@ networks:
 #      config:
 #        - subnet: "172.16.238.0/24"
 #        - subnet: "2a03:4000:38:48:ffff::/80"
+  gitea:
+    external: false
 
 volumes:
   data-keycloak:
     driver: local
   data-mailman:
+    driver: local
+  data-gitea:
     driver: local
   spool:
     driver: local

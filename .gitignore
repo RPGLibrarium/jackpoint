@@ -1,4 +1,5 @@
 /webhook/hooks.json
 /webhook/secret
+/gitea
 docker-compose.prod.yml
 .env
